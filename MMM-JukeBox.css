@@ -1,0 +1,203 @@
+.jukebox-wrapper {
+  background: #111;
+  color: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 480px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.jukebox-info {
+  font-size: 0.8em;
+  margin-bottom: 12px;
+  color: #ffffff;
+  text-align: center;
+}
+.jukebox-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.jukebox-btn {
+  background: #222;
+  color: #ffffff;
+  border: 2px solid #018749;
+  border-radius: 8px;
+  width: 38px;                 /* Explanation: slightly larger for touch targets */
+  height: 38px;
+  font-size: 0.7em;            /* Explanation: improve readability */
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.05s;
+  opacity: 0.9;                /* Explanation: higher default contrast */
+}
+.jukebox-btn:active { transform: scale(0.97); } /* Explanation: tactile feedback */
+.jukebox-btn:hover {
+  background: #018749;
+  color: #fff;
+}
+.jukebox-btn.active {
+  background: #018749;
+  color: #ffffff;
+  border-color: #FFD700;
+  opacity: 0.95; 
+}
+/* Icon control bar */
+.jukebox-icon-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0 6px 0;
+}
+.jukebox-icon-btn {
+  background: #000;           /* black background */
+  color: #fff;                /* white icon */
+  border: 2px solid #018749;  /* inactive border color per grid scheme */
+  border-radius: 8px;         /* square-rounded for text glyphs */
+  min-width: 34px;            /* better tap target */
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;            /* legible symbol size */
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.05s ease, opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+  opacity: 0.95;
+}
+.jukebox-icon-btn:hover { background: #018749; opacity: 1; }
+.jukebox-icon-btn:active { transform: scale(0.96); }
+
+/* Legacy controls in one row */
+.jukebox-legacy-controls { display: flex; gap: 8px; align-items: center; justify-content: center; }
+
+/* Old random/stop buttons (kept for compatibility) */
+.jukebox-random-btn, .jukebox-stop-btn, .jukebox-pause-btn {
+  background: #000000;
+  color: #fff;
+  border: 2px solid #018749;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.95em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  opacity: 0.95;                /* improve legibility */
+}
+.jukebox-random-btn.active { background: #018749; color: #ffffff; border-color: #FFD700; }
+.jukebox-random-btn:hover  { background: #018749; color: #fff; opacity: 0.9; }
+.jukebox-stop-btn:hover    { background: #ee4646b6; color: #fff; opacity: 0.9; }
+.jukebox-pause-btn:hover   { background: #018749; color: #fff; opacity: 0.9; }
+
+/* Active-state highlighting for symbol bar */
+.jukebox-icon-btn.active-pause { color: #FFD700; border-color: #FFD700; box-shadow: 0 0 0 2px rgba(255,215,0,0.25) inset; }
+.jukebox-icon-btn.active-play  { color: #27c24c; border-color: #FFD700; box-shadow: 0 0 0 2px rgba(39,194,76,0.25) inset; }
+.jukebox-icon-btn.active-stop  { color: #ff4d4d; border-color: #FFD700; box-shadow: 0 0 0 2px rgba(255,77,77,0.25) inset; }
+
+/* Focus-visible styles for accessibility */
+.jukebox-btn:focus-visible,
+.jukebox-pager-btn:focus-visible,
+.jukebox-random-btn:focus-visible,
+.jukebox-stop-btn:focus-visible,
+.jukebox-icon-btn:focus-visible,
+.jukebox-pause-btn:focus-visible {
+  outline: 2px solid #FFD700;
+  outline-offset: 2px;
+}
+.jukebox-nowplaying {
+  margin-top: 14px;
+  font-size: 0.8em;
+  color: #ffffff;
+  text-align: center;
+  font-weight: normal;
+  opacity: 0.7; 
+}
+
+/* Marquee effect for long Now Playing text (optional) */
+.jukebox-nowplaying-text.marquee {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 90%;
+  animation: jukebox-marquee 10s linear infinite;
+}
+@keyframes jukebox-marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Pager additions */
+.jukebox-pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  justify-content: center;
+}
+.jukebox-pager-btn {
+  background: #444;
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.jukebox-pager-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.jukebox-page-info {
+  color: #ccc;
+  font-size: 12px;
+}
+/* Explanation: Volume control container and slider styling */
+.jukebox-volume {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 4px 0;
+  justify-content: center;
+}
+
+.jukebox-volume-label {
+  color: #ccc;
+  font-size: 12px;
+  min-width: 90px;
+  text-align: right;
+}
+
+.jukebox-volume-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 180px;
+  height: 6px;
+  border-radius: 4px;
+  background: #333;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Thumb styling for WebKit */
+.jukebox-volume-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #018749;
+  border: 2px solid #FFD700;
+  cursor: pointer;
+}
+
+/* Thumb styling for Firefox */
+.jukebox-volume-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #018749;
+  border: 2px solid #FFD700;
+  cursor: pointer;
+}

@@ -1,0 +1,30 @@
+{
+  "name": "MMM-JukeBox",
+  "version": "1.0.0",
+  "description": "MagicMirror module for playing 50 local or remote audio tracks with random play.",
+  "main": "MMM-JukeBox.js",
+  "author": "gitgitaway",
+  "license": "MIT",
+  "keywords": [
+    "JukeBox",
+    "juke",
+    "Celtic",
+    "gitgitaway"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gitgitaway/MMM-JukeBox.git"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "debug": "nodemon MMM-JukeBox.js"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "debug": "^4.3.4",
+    "nodemon": "^3.0.2"
+  }
+}
+  
