@@ -30,15 +30,26 @@ Number of buttons on the grid will automatically match the number of sound files
 ---
 
 ## Installation
-1. Navigate to your MagicMirror modules directory:
+1. Navigate to your MagicMirror modules folder:
    ```bash
-   # Explanation: Switch to MagicMirror modules directory where custom modules live
    cd ~/MagicMirror/modules
    ```
 2. Clone or copy this module into `MMM-JukeBox/`.
-3. Place your audio files in:
+
+   ```bash
+   git clone https://github.com/gitgitaway/MMM-JukeBox`.
+   ```
+3. Install dependencies
+```bash
+npm install
+```
+4. Place your audio files in:
    - Local mode (default): `MMM-JukeBox/soundFiles/`
    - USB mode: your USB directory (e.g., `D:/soundFiles`) and set `source: "USB"` in config
+
+5. Add the config to ~/MagicMirror/config/config.js`
+
+6. Restart MagicMirror.
 
 ---
 
@@ -192,4 +203,5 @@ Thanks to the MagicMirror community for inspiration and guidance! Special thanks
 
 
 ## License
+
 MIT
