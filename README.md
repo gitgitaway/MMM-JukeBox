@@ -12,8 +12,8 @@ Number of buttons on the grid will automatically match the number of sound files
 ---
 ## Screenshots
  
-- ![Grid with Traditional Buttons](./screenshots/Traditional_Buttons.png)
-- ![Grid with Control Bar](./screenshots/Control_Bar.png)
+![Control Bar](./screenshots/Control_Bar.png)
+![Traditional Buttons](./screenshots/Traditional-Buttons.png)
 
 
 ## Features
@@ -187,7 +187,7 @@ Key classes from `MMM-JukeBox.css` you can theme in your custom CSS:
 ## Notes
 
 This id the 2nd module in my Celtic themed man cave magicmirror.  
-- ![Screenshot 1](./screenshots/screenshot-1.png)
+- ![Screenshot 1](./screenshots/CelticMM-Screenshot.png)
 
  The other modules can be found here:- 
 - Module 1: MyTeams-Clock  https://github.com/gitgitaway/MMM-MyTeams-Clock
@@ -205,3 +205,4 @@ Thanks to the MagicMirror community for inspiration and guidance! Special thanks
 ## License
 
 MIT
+
