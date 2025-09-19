@@ -13,7 +13,7 @@ Number of buttons on the grid will automatically match the number of sound files
 ## Screenshots
  
 ![Control Bar](./screenshots/Control_Bar.png)
-![Traditional Buttons](./screenshots/Traditional-Buttons.png)
+![Traditional Buttons](./screenshots/Traditional_Buttons.png)
 
 
 ## Features
@@ -205,4 +205,5 @@ Thanks to the MagicMirror community for inspiration and guidance! Special thanks
 ## License
 
 MIT
+
 
