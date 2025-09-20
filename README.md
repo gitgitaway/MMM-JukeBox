@@ -12,9 +12,8 @@ Number of buttons on the grid will automatically match the number of sound files
 ---
 ## Screenshots
  
-- ![Screenshot 1](./screenshots/Control_Bar.png)
-
-- ![Screenshot 2](./screenshots/Traditional_Buttons.png)
+- ![Grid with Traditional Buttons](./screenshots/traditional-buttons.png)
+- ![Grid with Control Bar](./screenshots/control-bar.png)
 
 
 ## Features
@@ -31,26 +30,15 @@ Number of buttons on the grid will automatically match the number of sound files
 ---
 
 ## Installation
-1. Navigate to your MagicMirror modules folder:
+1. Navigate to your MagicMirror modules directory:
    ```bash
+   # Explanation: Switch to MagicMirror modules directory where custom modules live
    cd ~/MagicMirror/modules
    ```
 2. Clone or copy this module into `MMM-JukeBox/`.
-
-   ```bash
-   git clone https://github.com/gitgitaway/MMM-JukeBox`.
-   ```
-3. Install dependencies
-```bash
-npm install
-```
-4. Place your audio files in:
+3. Place your audio files in:
    - Local mode (default): `MMM-JukeBox/soundFiles/`
    - USB mode: your USB directory (e.g., `D:/soundFiles`) and set `source: "USB"` in config
-
-5. Add the config to ~/MagicMirror/config/config.js`
-
-6. Restart MagicMirror.
 
 ---
 
@@ -187,8 +175,8 @@ Key classes from `MMM-JukeBox.css` you can theme in your custom CSS:
 ---
 ## Notes
 
-This is the 2nd module in my Celtic themed man cave magicmirror.  
-- ![Screenshot 3](./screenshots/CelticMM-Screenshot.png)
+This id the 2nd module in my Celtic themed man cave magicmirror.  
+- ![Screenshot 1](./screenshots/screenshot-1.png)
 
  The other modules can be found here:- 
 - Module 1: MyTeams-Clock  https://github.com/gitgitaway/MMM-MyTeams-Clock
@@ -204,9 +192,4 @@ Thanks to the MagicMirror community for inspiration and guidance! Special thanks
 
 
 ## License
-
 MIT
-
-
-
-
