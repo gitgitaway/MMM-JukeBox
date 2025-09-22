@@ -176,7 +176,7 @@ Key classes from `MMM-JukeBox.css` you can theme in your custom CSS:
 ## Notes
 
 This id the 2nd module in my Celtic themed man cave magicmirror.  
-- ![Screenshot 1](./screenshots/screenshot-1.png)
+- ![Screenshot 1](./screenshots/celticmm-screenshot.png)
 
  The other modules can be found here:- 
 - Module 1: MyTeams-Clock  https://github.com/gitgitaway/MMM-MyTeams-Clock
@@ -192,4 +192,5 @@ Thanks to the MagicMirror community for inspiration and guidance! Special thanks
 
 
 ## License
+
 MIT
