@@ -167,7 +167,7 @@ Key classes from `MMM-JukeBox.css` you can theme in your custom CSS:
 ---
 ## Notes
 
-This id the 4th module in my Celtic themed man cave magicmirror.  
+This is the 4th module in my Celtic themed man cave magicmirror.  
 - ![](./screenshots/celticmm-screenshot.png)
 
  The other modules can be found here:- 
@@ -186,5 +186,6 @@ Thanks to the MagicMirror community for inspiration and guidance! Special thanks
 ## License
 
 MIT
+
 
 
