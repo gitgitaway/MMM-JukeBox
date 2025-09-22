@@ -32,10 +32,13 @@ Number of buttons on the grid will automatically match the number of sound files
 ## Installation
 1. Navigate to your MagicMirror modules directory:
    ```bash
-   # Explanation: Switch to MagicMirror modules directory where custom modules live
    cd ~/MagicMirror/modules
    ```
 2. Clone or copy this module into `MMM-JukeBox/`.
+  ```bash
+  git clone https://github.com/gitgitaway/MMM-JukeBox.git
+   ```
+
 3. Place your audio files in:
    - Local mode (default): `MMM-JukeBox/soundFiles/`
    - USB mode: your USB directory (e.g., `D:/soundFiles`) and set `source: "USB"` in config
@@ -46,16 +49,7 @@ Number of buttons on the grid will automatically match the number of sound files
 Add the module to your `config/config.js`:
 
 ```javascript
-/* Explanation:
- * Example config for MMM-JukeBox showing common options and inline comments.
- * - source: set to "file" (default), "USB", or "URL" depending on where your media lives.
- * - usbPath: required if source is "USB". Use your OS path (e.g., D:/soundFiles on Windows).
- * - allowedExtensions: filter for scan (front and back end align on the same list).
- * - pageSize: how many numbered buttons per page.
- * - autostartRandomLoop: start random playback automatically after tracks are scanned.
- * - continueOnHide: keep audio playing when the module is hidden.
- * - showControlBar: set true to use symbol bar (🔀 ◀ ⏸ ▷ ✖ ▶). When true, the legacy Random button is hidden.
- */
+
 {
   module: "MMM-JukeBox",
   position: "top_left", // Explanation: choose any MagicMirror position
@@ -72,11 +66,9 @@ Add the module to your `config/config.js`:
     syncUsbToLocal: false,           // Explanation: optional backend copy from USB to ./soundFiles
     autostartRandomLoop: false       // Explanation: true = auto start random loop on startup
 
-    // For source: "URL"
-    // Explanation: supply your own track list via a custom integration or by editing the module
-    // config.tracks = [ { file:"", url:"https://...", title:"...", artist:"..." }, ... ]
+    
   }
-}
+},
 ```
 
 ---
@@ -194,4 +186,5 @@ Thanks to the MagicMirror community for inspiration and guidance! Special thanks
 ## License
 
 MIT
+
 
