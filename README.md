@@ -175,14 +175,14 @@ Key classes from `MMM-JukeBox.css` you can theme in your custom CSS:
 ---
 ## Notes
 
-This id the 2nd module in my Celtic themed man cave magicmirror.  
-- ![Screenshot 1](./screenshots/celticmm-screenshot.png)
+This id the 4th module in my Celtic themed man cave magicmirror.  
+- ![](./screenshots/celticmm-screenshot.png)
 
  The other modules can be found here:- 
-- Module 1: MyTeams-Clock  https://github.com/gitgitaway/MMM-MyTeams-Clock
-- Module 2: MyTeams-Clock  https://github.com/gitgitaway/MMM-MyTeams-LeaugeTable
-- Module 3: MyTeams-Clock  https://github.com/gitgitaway/MMM-MyTeams-Fixtures
-
+- Module 1:  https://github.com/gitgitaway/MMM-MyTeams-Clock
+- Module 2:  https://github.com/gitgitaway/MMM-MyTeams-LeaugeTable
+- Module 3:  https://github.com/gitgitaway/MMM-MyTeams-Fixtures
+- Module 5:  https://github.com/gitgitaway/MMM-Celtic-OnThisDay
 ---
 ## Acknowledgments
 Thanks to the MagicMirror community for inspiration and guidance! Special thanks to @jasonacox for his work on MMM-MusicPlayer which served as a starting point. 
@@ -194,3 +194,4 @@ Thanks to the MagicMirror community for inspiration and guidance! Special thanks
 ## License
 
 MIT
+
