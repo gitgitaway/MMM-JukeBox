@@ -7,9 +7,10 @@
   "license": "MIT",
   "keywords": [
     "JukeBox",
-    "juke",
+    "Juke",
     "Celtic",
-    "gitgitaway"
+    "music",
+    "mp3 player"
   ],
   "repository": {
     "type": "git",
@@ -28,3 +29,4 @@
   }
 }
   
+
