@@ -10,7 +10,7 @@
     "Juke",
     "Celtic",
     "music",
-    "mp3 player"
+    "Mp3 player"
   ],
   "repository": {
     "type": "git",
@@ -29,4 +29,5 @@
   }
 }
   
+
 
