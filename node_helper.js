@@ -83,9 +83,15 @@ module.exports = NodeHelper.create({
         const file = req.query.file || "";
         if (!base || !file) return res.status(400).send("Missing base or file");
 
-        // Prevent path traversal
-        const usbBase = path.resolve(base);
+        // Restrict base to allowedUsbBase if configured at runtime
+        const restrictUsbBase = this.restrictUsbBase !== undefined ? !!this.restrictUsbBase : true; // default hardened
+        const configuredBase = this.allowedUsbBase || base;
+        const usbBase = path.resolve(configuredBase);
         const target = path.resolve(usbBase, file);
+        if (restrictUsbBase && !path.resolve(base).startsWith(usbBase)) {
+          return res.status(403).send("Forbidden");
+        }
+        // Prevent path traversal and ensure target stays within base
         if (!target.startsWith(usbBase)) return res.status(403).send("Forbidden");
 
         // Validate file existence
@@ -196,6 +202,24 @@ module.exports = NodeHelper.create({
       } catch (e) {
         this.sendSocketNotification("USB_PROBE_RESULT", { ok: false, message: e?.message || String(e) });
       }
+    } else if (notification === "SET_RESTRICTIONS") {
+      // Optional: Accept restriction config at runtime
+      // Payload: { restrictUsbBase: boolean, allowedUsbBase?: string }
+      try {
+        this.restrictUsbBase = !!payload?.restrictUsbBase;
+        this.allowedUsbBase = payload?.allowedUsbBase ? path.resolve(payload.allowedUsbBase) : null;
+      } catch (_) {}
+    } else if (notification === "BACKUP_LOCAL") {
+      // Backup local soundFiles to backupFiles before any USB scan/sync
+      const srcDir = path.join(__dirname, "soundFiles");
+      const destDir = path.join(__dirname, "backupFiles");
+      const extensions = payload?.extensions || null;
+      this.backupLocalDir(srcDir, destDir, extensions)
+        .then((result) => this.sendSocketNotification("BACKUP_DONE", { ok: true, ...result }))
+        .catch((err) => {
+          console.error(`${this.logPrefix} Backup error:`, err?.message || err);
+          this.sendSocketNotification("BACKUP_DONE", { ok: false, error: err?.message || String(err) });
+        });
     } else if (notification === "SET_DEBUG") {
       // Payload: { enabled: boolean, lines?: string[] }
       this.debugEnabled = !!(payload && payload.enabled);
@@ -242,6 +266,45 @@ module.exports = NodeHelper.create({
     for (const ent of entries) {
       if (!ent.isFile() || !isAudioFile(ent.name)) continue;
       const src = path.join(usbBase, ent.name);
+      const dst = path.join(destDir, ent.name);
+      let needCopy = true;
+      try {
+        const [s, d] = await Promise.allSettled([fsp.stat(src), fsp.stat(dst)]);
+        if (s.status === 'fulfilled' && d.status === 'fulfilled') {
+          if (s.value.size === d.value.size && s.value.mtimeMs <= d.value.mtimeMs) needCopy = false;
+        }
+      } catch {}
+      if (needCopy) {
+        try { await fsp.copyFile(src, dst); copied++; } catch {}
+      } else {
+        skipped++;
+      }
+    }
+    return { copied, skipped, dest: destDir };
+  },
+
+  /* ---------------------------
+   * Backup local soundFiles -> backupFiles (non-recursive)
+   * --------------------------- */
+  async backupLocalDir(srcDir, destDir, extensions) {
+    // Ensure source exists (if not, treat as empty backup)
+    let s;
+    try {
+      s = await fsp.stat(srcDir);
+    } catch {
+      return { copied: 0, skipped: 0, dest: destDir };
+    }
+    if (!s.isDirectory()) return { copied: 0, skipped: 0, dest: destDir };
+
+    try { await fsp.mkdir(destDir, { recursive: true }); } catch {}
+
+    const isAudioFile = makeIsAudioFile(extensions);
+    const entries = await fsp.readdir(srcDir, { withFileTypes: true });
+
+    let copied = 0, skipped = 0;
+    for (const ent of entries) {
+      if (!ent.isFile() || !isAudioFile(ent.name)) continue;
+      const src = path.join(srcDir, ent.name);
       const dst = path.join(destDir, ent.name);
       let needCopy = true;
       try {

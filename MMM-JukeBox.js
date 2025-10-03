@@ -16,14 +16,26 @@ Module.register("MMM-JukeBox", {
     showPauseButton: true,         // Show Pause/Resume button (legacy row)
     showStopButton: true,          // Show Stop button (legacy row)
     showControlBar: false,         // Default: show legacy Random/Pause/Stop row; set true to show ◀ ⏸ ▷ ✖ ▶ control bar
-    marqueeNowPlaying: true, 
+    marqueeNowPlaying: true,       // Scroll long "Now Playing" text
     continueOnHide: true,
-    showVolumeControl: true,       // Toggle volume slider visibility      // Scroll long "Now Playing" text
+    showVolumeControl: true,       // Toggle volume slider visibility
     defaultVolume: 80,             // Default volume percent (0..100) used on first run
     volumeInputDebounceMs: 100,    // Debounce for volume slider oninput to reduce rapid updates
     updateDomThrottleMs: 100,      // Throttle interval for updateDom calls (ms)
     pageSize: 40,                  // Pagination - limits the number of buttons per page
     
+    // Status / UX
+    showSyncStatus: true,          // Show sync/probe status messages in the UI
+    usbProbeRetryMs: 10000,        // Retry probing USB path if initially unavailable
+    rescanIntervalMs: 0,           // Optional periodic rescan interval (0 = off)
+
+    // Security
+    restrictUsbBase: true,         // If true, backend will restrict USB streaming to the configured base path only
+    allowedUsbBase: null,          // Optional explicit base path to allow (defaults to usbPath)
+    
+    // Maintenance
+    backupLocal: false,            // If true (USB source): copy ./soundFiles -> ./backupFiles before first USB scan/sync
+
     // Button Labels
     randomButtonText: "Random Play",
     stopButtonText: "Stop",
@@ -33,7 +45,13 @@ Module.register("MMM-JukeBox", {
     // Grid button colour scheme options
 		colorActive: "#018749",
 		colorHover: "#FFD700",
-		colorDefault: "#222",                    
+		colorDefault: "#222",
+		
+		// Theme and appearance overrides
+		darkMode: null,              // null = auto, true = force dark, false = force light
+		fontColorOverride: null,     // Override all font colors (e.g., "#FFFFFF")
+		opacityOverride: null,       // Override all opacity values (e.g., 1.0)
+		borderColorOverride: null,   // Override all inactive button border colors (e.g., "#FFFFFF" to force white)
   },
 
   start: function () {
@@ -47,6 +65,10 @@ Module.register("MMM-JukeBox", {
     this.tracksLoaded = false;
     this._autoStarted = false; // ensure we only autostart once
     this.config.tracks = []; // Will be filled after scan
+    this.usbSyncedToLocal = false; // Tracks whether USB content has been synced to ./soundFiles
+    this.syncInProgress = false; // UI status: currently syncing USB -> local
+    this.lastSync = null; // { ok, copied, skipped, time }
+    this.lastBackup = null; // { ok, copied, skipped, error?, time }
 
     // Initialize throttled updateDom helper
     const throttleMs = Math.max(0, Number(this.config.updateDomThrottleMs || 0));
@@ -78,12 +100,34 @@ Module.register("MMM-JukeBox", {
       this.sendSocketNotification("SET_DEBUG", { enabled: false });
     }
 
+    // Apply backend security restrictions for USB streaming
+    this.sendSocketNotification("SET_RESTRICTIONS", {
+      restrictUsbBase: !!this.config.restrictUsbBase,
+      allowedUsbBase: this.config.allowedUsbBase || this.config.usbPath
+    });
+
     // Ask backend if it has a stored volume; if so we will adopt it
     this.sendSocketNotification("GET_VOLUME");
 
-    // If USB source, probe path once to warn early if inaccessible
+    // If USB source, probe path and optionally retry
     if (this.config.source === "USB" && this.config.usbPath) {
+      this._lastUsbProbeOk = null;
       this.sendSocketNotification("PROBE_USB", { path: this.config.usbPath });
+      const retryMs = Math.max(0, Number(this.config.usbProbeRetryMs || 0));
+      if (retryMs > 0) {
+        this._usbProbeInterval = setInterval(() => {
+          if (this._lastUsbProbeOk === true) return; // stop retrying once connected
+          this.sendSocketNotification("PROBE_USB", { path: this.config.usbPath });
+        }, retryMs);
+      }
+    }
+
+    // Optional periodic rescan
+    const rescanMs = Math.max(0, Number(this.config.rescanIntervalMs || 0));
+    if (rescanMs > 0) {
+      this._rescanInterval = setInterval(() => {
+        try { this.scanTracks(); } catch (e) { console.warn("[MMM-JukeBox] periodic rescan error:", e?.message || e); }
+      }, rescanMs);
     }
 
     // Kick off SONG_LIST delivery via node_helper
@@ -94,6 +138,23 @@ Module.register("MMM-JukeBox", {
   scanTracks: function () {
     let scanPath, sourceType;
     if (this.config.source === "USB") {
+      // Optional backup of existing local files before first USB scan/sync
+      if (this.config.backupLocal === true && !this._backupDone) {
+        this._backupDone = true; // ensure one-time
+        this.sendSocketNotification("BACKUP_LOCAL", { extensions: this.config.allowedExtensions });
+      }
+      // If syncUsbToLocal is enabled, request backend to copy from USB to ./soundFiles, then scan local
+      if (this.config.syncUsbToLocal === true && !this.usbSyncedToLocal) {
+        // Trigger a one-time sync; on completion we will scan local folder
+        this.syncInProgress = true;
+        this._throttledUpdateDom();
+        this.sendSocketNotification("SYNC_USB_TO_LOCAL", {
+          usbBase: this.config.usbPath,
+          extensions: this.config.allowedExtensions
+        });
+        return; // Wait for SYNC_DONE before scanning
+      }
+      // When not syncing, scan USB path directly
       scanPath = this.config.usbPath;
       sourceType = "USB";
     } else if (this.config.source === "file") {
@@ -127,6 +188,29 @@ Module.register("MMM-JukeBox", {
         this._autoStarted = true;
         this.startRandomPlay();
       }
+    } else if (notification === "SYNC_DONE") {
+      // Handle result of USB -> local sync; on success, scan local soundFiles folder
+      this.syncInProgress = false;
+      if (payload && payload.ok) {
+        this.usbSyncedToLocal = true;
+        this.lastSync = { ok: true, copied: payload.copied ?? 0, skipped: payload.skipped ?? 0, time: Date.now() };
+        // After successful sync, scan the local soundFiles directory
+        this.sendSocketNotification("SCAN_SONGS", {
+          path: this.file("soundFiles"),
+          source: "file",
+          extensions: this.config.allowedExtensions
+        });
+      } else {
+        this.lastSync = { ok: false, error: payload && payload.error ? payload.error : "Unknown error", time: Date.now() };
+        console.warn("[MMM-JukeBox] USB sync failed:", this.lastSync.error);
+        // Fallback: try scanning the USB path directly so UI still works
+        this.sendSocketNotification("SCAN_SONGS", {
+          path: this.config.usbPath,
+          source: "USB",
+          extensions: this.config.allowedExtensions
+        });
+      }
+      this._throttledUpdateDom();
     } else if (notification === "VOLUME_VALUE") {
       // payload: { value: number|null } from backend
       const v = payload && typeof payload.value === "number" ? payload.value : null;
@@ -139,10 +223,20 @@ Module.register("MMM-JukeBox", {
         this.updateDom();
       }
     } else if (notification === "USB_PROBE_RESULT") {
-      // Explanation: Surface early warnings if USB path is inaccessible
+      // Surface early warnings if USB path is inaccessible and track probe status
+      this._lastUsbProbeOk = !!(payload?.ok);
       if (!payload?.ok) {
         console.warn("[MMM-JukeBox] USB path probe failed:", payload?.message || "Unknown error");
+        // If we wanted, we could render a status line via showSyncStatus (handled in getDom)
       }
+    } else if (notification === "BACKUP_DONE") {
+      // Show one-time backup result in UI prior to sync status
+      if (payload && payload.ok) {
+        this.lastBackup = { ok: true, copied: payload.copied ?? 0, skipped: payload.skipped ?? 0, time: Date.now() };
+      } else {
+        this.lastBackup = { ok: false, error: (payload && payload.error) ? payload.error : "Unknown error", time: Date.now() };
+      }
+      this._throttledUpdateDom();
     }
   },
 
@@ -150,8 +244,50 @@ Module.register("MMM-JukeBox", {
     const wrapper = document.createElement("div");
     wrapper.className = "jukebox-wrapper";
 
+    // Apply theme and appearance overrides via dynamic CSS injection
+    this._applyThemeOverrides(wrapper);
+
     if (!this.tracksLoaded) {
-      wrapper.innerHTML = "<div>Loading tracks...</div>";
+      const loading = document.createElement("div");
+      loading.innerText = "Loading tracks...";
+      wrapper.appendChild(loading);
+      if (this.config.source === "USB" && this.config.showSyncStatus) {
+        const status = document.createElement("div");
+        status.style.marginTop = "6px";
+        status.style.textAlign = "center";
+        // Show backup result first if available (fade after 10s)
+        if (this.lastBackup) {
+          const backupLine = document.createElement("div");
+          backupLine.className = "jukebox-fade-10s";
+          if (this.lastBackup.ok) {
+            backupLine.textContent = `Backup complete: ${this.lastBackup.copied} copied, ${this.lastBackup.skipped} skipped`;
+          } else {
+            backupLine.textContent = `Backup failed: ${this.lastBackup.error || "Unknown error"}`;
+          }
+          // small info icon to indicate details available on hover
+          const info = document.createElement("span");
+          info.className = "jukebox-info-icon";
+          info.title = this.lastBackup.ok
+            ? `Backup completed at ${new Date(this.lastBackup.time).toLocaleTimeString()}`
+            : `Backup failed at ${new Date(this.lastBackup.time).toLocaleTimeString()}`;
+          info.textContent = "ⓘ";
+          backupLine.appendChild(info);
+          status.appendChild(backupLine);
+        }
+        if (this.syncInProgress) {
+          // Spinner glyph while syncing (does not fade while active)
+          const spin = document.createElement("span");
+          spin.className = "jukebox-spinner";
+          spin.setAttribute("aria-label", "Syncing");
+          spin.title = "Syncing";
+          spin.textContent = "⟳"; // simple glyph
+          status.appendChild(spin);
+          const span = document.createElement("span");
+          span.textContent = " Syncing from USB…";
+          status.appendChild(span);
+        }
+        wrapper.appendChild(status);
+      }
       return wrapper;
     }
 
@@ -357,16 +493,23 @@ Module.register("MMM-JukeBox", {
       wrapper.appendChild(volWrap);
     }
 
-    // Now playing
+    // Now playing + status/badge
     const nowPlaying = document.createElement("div");
     nowPlaying.className = "jukebox-nowplaying";
     const nowText = document.createElement("span");
     nowText.className = "jukebox-nowplaying-text";
+
+    // Build Now Playing text
     if (this.activeIdx !== null) {
       const track = this.config.tracks[this.activeIdx];
       let info = `Now Playing: ${track.title || "Unknown Title"}`;
       if (track.artist) info += ` by ${track.artist}`;
       if (track.duration) info += ` (${track.duration})`;
+      // Source badge
+      if (this.config.source === "USB") {
+        const usingLocal = (this.config.syncUsbToLocal === true && this.usbSyncedToLocal === true);
+        info += usingLocal ? " [Local]" : " [USB]";
+      }
       nowText.textContent = info;
       if (this.config.marqueeNowPlaying && info.length > 30) {
         nowText.classList.add("marquee");
@@ -376,7 +519,53 @@ Module.register("MMM-JukeBox", {
     } else {
       nowText.textContent = "";
     }
+
     nowPlaying.appendChild(nowText);
+
+    // Sync/probe status footer when enabled
+    if (this.config.showSyncStatus === true && this.config.source === "USB") {
+      const status = document.createElement("div");
+      status.style.marginTop = "4px";
+      status.style.fontSize = "0.75em";
+      status.style.opacity = "0.8";
+      // Backup result first, if present (fade after 10s)
+      if (this.lastBackup) {
+        const backupLine = document.createElement("div");
+        backupLine.className = "jukebox-fade-10s";
+        backupLine.style.marginBottom = "2px";
+        backupLine.textContent = this.lastBackup.ok
+          ? `Backup complete: ${this.lastBackup.copied} copied, ${this.lastBackup.skipped} skipped`
+          : `Backup failed: ${this.lastBackup.error || "Unknown error"}`;
+        const info = document.createElement("span");
+        info.className = "jukebox-info-icon";
+        info.title = this.lastBackup.ok
+          ? `Backup completed at ${new Date(this.lastBackup.time).toLocaleTimeString()}`
+          : `Backup failed at ${new Date(this.lastBackup.time).toLocaleTimeString()}`;
+        info.textContent = "ⓘ";
+        backupLine.appendChild(info);
+        status.appendChild(backupLine);
+      }
+      if (this.syncInProgress) {
+        const spin = document.createElement("span");
+        spin.className = "jukebox-spinner";
+        spin.setAttribute("aria-label", "Syncing");
+        spin.title = "Syncing";
+        spin.textContent = "⟳";
+        status.appendChild(spin);
+        const span = document.createElement("span");
+        span.textContent = " Syncing from USB…";
+        status.appendChild(span);
+      } else if (this.lastSync) {
+        const syncLine = document.createElement("div");
+        syncLine.className = "jukebox-fade-10s";
+        syncLine.textContent = this.lastSync.ok
+          ? `Sync complete: ${this.lastSync.copied} copied, ${this.lastSync.skipped} skipped`
+          : `Sync failed: ${this.lastSync.error || "Unknown error"}`;
+        status.appendChild(syncLine);
+      }
+      if (status.textContent || status.childNodes.length) nowPlaying.appendChild(status);
+    }
+
     wrapper.appendChild(nowPlaying);
 
     return wrapper;
@@ -385,14 +574,21 @@ Module.register("MMM-JukeBox", {
   // Build a safe audio URL for different sources
   buildAudioSrc: function(track) {
     if (this.config.debug) this.sendSocketNotification("DEBUG_LOG", `[front] buildAudioSrc for ${track?.title || track?.file || 'unknown'}`);
+    // URL source: play provided URL
     if (this.config.source === "URL" && track.url) return track.url;
+
+    // USB source: if we have synced to local, prefer local file to avoid USB dependency
     if (this.config.source === "USB") {
-      // Stream via backend to avoid file:/// restrictions in browser
+      if (this.config.syncUsbToLocal === true && this.usbSyncedToLocal === true) {
+        return this.file("soundFiles/" + track.file);
+      }
+      // Otherwise stream directly from USB via backend route
       const base = encodeURIComponent(this.config.usbPath);
       const fname = encodeURIComponent(track.file);
       return `/MMM-JukeBox/usb?base=${base}&file=${fname}`;
     }
-    // default local file in module
+
+    // Default local file in module (file source)
     return this.file("soundFiles/" + track.file);
   },
 
@@ -425,7 +621,8 @@ Module.register("MMM-JukeBox", {
       if (!this.audio) {
         this.audio = new Audio();
       }
-      this.audio.src = audioSrc;
+      // Only reset src if changed to avoid breaking playing stream when updating DOM
+      if (this.audio.src !== audioSrc) this.audio.src = audioSrc;
       this.audio.volume = this.volume;
 
       // Ensure active page shows this track number
@@ -760,6 +957,64 @@ Module.register("MMM-JukeBox", {
 
   getStyles: function () {
     return [this.file("MMM-JukeBox.css")];
+  },
+
+  /**
+   * Apply theme and appearance overrides via dynamic CSS injection
+   * Handles: darkMode, fontColorOverride, opacityOverride
+   */
+  _applyThemeOverrides: function (wrapper) {
+    try {
+      // Remove any existing override style element
+      const existingStyle = document.getElementById("mmm-jukebox-theme-override");
+      if (existingStyle) existingStyle.remove();
+
+      const cssRules = [];
+      const moduleClass = ".jukebox-wrapper";
+
+      // Dark/Light mode override
+      if (this.config.darkMode === true) {
+        // Force dark mode
+        cssRules.push(`${moduleClass} { background: #111 !important; }`);
+      } else if (this.config.darkMode === false) {
+        // Force light mode
+        cssRules.push(`${moduleClass} { background: #f5f5f5 !important; }`);
+        cssRules.push(`${moduleClass} * { color: #000 !important; }`);
+      }
+
+      // Font color override - applies to all text elements
+      if (this.config.fontColorOverride) {
+        cssRules.push(`${moduleClass}, ${moduleClass} * { color: ${this.config.fontColorOverride} !important; }`);
+      }
+
+      // Opacity override - applies to all elements with opacity
+      if (this.config.opacityOverride !== null && this.config.opacityOverride !== undefined) {
+        const opacity = parseFloat(this.config.opacityOverride);
+        if (!isNaN(opacity)) {
+          cssRules.push(`${moduleClass} * { opacity: ${opacity} !important; }`);
+        }
+      }
+
+      // Border color override - applies to all inactive button borders
+      // Targets: grid buttons, icon buttons, legacy buttons (random/pause/stop), and pager buttons
+      if (this.config.borderColorOverride) {
+        cssRules.push(`${moduleClass} .jukebox-btn { border-color: ${this.config.borderColorOverride} !important; }`);
+        cssRules.push(`${moduleClass} .jukebox-icon-btn { border-color: ${this.config.borderColorOverride} !important; }`);
+        cssRules.push(`${moduleClass} .jukebox-random-btn { border-color: ${this.config.borderColorOverride} !important; }`);
+        cssRules.push(`${moduleClass} .jukebox-pause-btn { border-color: ${this.config.borderColorOverride} !important; }`);
+        cssRules.push(`${moduleClass} .jukebox-stop-btn { border-color: ${this.config.borderColorOverride} !important; }`);
+      }
+
+      // Inject the style element if we have rules
+      if (cssRules.length > 0) {
+        const styleEl = document.createElement("style");
+        styleEl.id = "mmm-jukebox-theme-override";
+        styleEl.textContent = cssRules.join("\n");
+        document.head.appendChild(styleEl);
+      }
+    } catch (e) {
+      console.error("[MMM-JukeBox] Theme override error:", e?.message || e);
+    }
   },
 
   // Ensure the current page shows the provided 0-based track index

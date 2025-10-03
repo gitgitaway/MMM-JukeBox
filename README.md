@@ -23,6 +23,7 @@ Number of buttons on the grid will automatically match the number of sound files
 - **Buttons inactive until clicked** when `autostartRandomLoop: false`
 - **Pagination** to handle large libraries (configurable page size)
 - **USB file streaming** via an Express route to avoid `file:///` browser restrictions
+- **Optional USB→Local Sync**: when `source: "USB"` and `syncUsbToLocal: true`, files are copied from `usbPath` to `./soundFiles` and played locally (UI shows syncing with a small spinner and results)
 - **Autostart Random Loop** on startup (optional)
 - **Continue playing on HIDE** (optional)
 - **Allowed extensions filter** (front-end configurable and enforced in the backend)
@@ -77,7 +78,7 @@ Add the module to your `config/config.js`:
 
 | Option               | Type            | Default                         | Description |
 |----------------------|-----------------|---------------------------------|-------------|
-| `source`             | string          | `"file"`                        | Audio source. `"file"` uses the module's `soundFiles` directory. `"USB"` streams via backend from `usbPath`. `"URL"` expects you to provide `url` values for tracks. |
+| `source`             | string          | `"file"`                        | Audio source. `"file"` uses the module's `soundFiles` directory. `"USB"` streams via backend from `usbPath` and, if `syncUsbToLocal: true`, will first copy to `./soundFiles` and then play locally. `"URL"` expects you to provide `url` values for tracks. |
 | `usbPath`            | string          | `"D:/soundFiles"`              | Path to your USB music folder when `source === "USB"`. Example for Windows shown. |
 | `allowedExtensions`  | string[]        | `[".mp3", ".wav", ".ogg", ".m4a"]` | File extensions included during scanning. Case-insensitive. |
 | `pageSize`           | number          | `40`                            | Number of track buttons per page. Must be ≥ 1. |
@@ -88,6 +89,10 @@ Add the module to your `config/config.js`:
 | `syncUsbToLocal`     | boolean         | `false`                         | If `true`, backend can copy from `usbPath` into the module's `soundFiles` directory (see Notifications). |
 | `autostartRandomLoop`| boolean         | `false`                         | Start randomized playback automatically after the scan completes (once at startup). |
 | `tracks`             | array           | `[]`                            | Populated automatically by the scan. For `URL` source, you can provide objects with `{ url, title, artist }`. |
+| `backupLocal`        | boolean         | `false`                         | If `true` and `source: "USB"`, copy the current `./soundFiles` into `./backupFiles` once before the first USB scan/sync. |
+| `darkMode`           | boolean/null    | `null`                          | Theme control: `null` = auto (default CSS), `true` = force dark mode, `false` = force light mode. |
+| `fontColorOverride`  | string/null     | `null`                          | Override all font colors with a specific color (e.g., `"#FFFFFF"` for white). Set to `null` to use default CSS colors. |
+| `opacityOverride`    | number/null     | `null`                          | Override all opacity values (e.g., `1.0` for full opacity). Set to `null` to use default CSS opacity values. |
 
 ---
 

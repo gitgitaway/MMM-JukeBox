@@ -201,3 +201,33 @@
   border: 2px solid #FFD700;
   cursor: pointer;
 }
+
+/* Simple spinner glyph */
+.jukebox-spinner {
+  display: inline-block;
+  margin-right: 6px;
+  animation: jukebox-spin 1s linear infinite;
+}
+@keyframes jukebox-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Fade-out helper for ephemeral status lines (10s) */
+.jukebox-fade-10s {
+  animation: jukebox-fade-out 10s ease-in forwards;
+}
+@keyframes jukebox-fade-out {
+  0% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Small info icon for persisted details */
+.jukebox-info-icon {
+  display: inline-block;
+  margin-left: 6px;
+  opacity: 0.7;
+  cursor: help;
+}
+.jukebox-info-icon:hover { opacity: 1; }
