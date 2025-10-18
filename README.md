@@ -2,12 +2,14 @@
 
 A MagicMirror² module that displays a grid of numbered buttons for your audio tracks and lets you play them individually or in a randomized loop. 
 Supports local files stored on the SD card, USB paths (securely streamed via the backend), and URL sources. 
-Includes pagination, hover/active styling, and an optional autostart random loop.
+Includes pagination, hover/active styling, volume control, and an optional autostart random loop.
 Number of buttons on the grid will automatically match the number of sound files 
 
+- **Version**: 1.1.0
 - **Author**: gitgitaway
 - **MagicMirror² Compatibility**: Tested with current MM² versions
 - **Files**: `MMM-JukeBox.js`, `node_helper.js`, `MMM-JukeBox.css`
+- **Changelog**: See [CHANGELOG.md](./CHANGELOG.md) for version history
 
 ---
 ## Screenshots
@@ -18,15 +20,22 @@ Number of buttons on the grid will automatically match the number of sound files
 
 ## Features
 - **Auto-scan** of audio files from a local `soundFiles` folder or a configured USB folder
-- **Random Play** with continuous looping
-- **Shuffle control bar icon** that matches the existing symbol formatting
-- **Buttons inactive until clicked** when `autostartRandomLoop: false`
+- **Volume Control** with persistent storage (slider UI with localStorage + backend persistence)
+- **Dual Control Modes**: Traditional buttons or modern symbol-based control bar (◀ ⏸ ▷ ✖ ▶)
+- **Random Play** with continuous looping and shuffle functionality
+- **Playback State Persistence**: Remembers active track, random mode, and volume across reloads
 - **Pagination** to handle large libraries (configurable page size)
-- **USB file streaming** via an Express route to avoid `file:///` browser restrictions
-- **Optional USB→Local Sync**: when `source: "USB"` and `syncUsbToLocal: true`, files are copied from `usbPath` to `./soundFiles` and played locally (UI shows syncing with a small spinner and results)
+- **USB file streaming** via secure Express route with path traversal protection
+- **Optional USB→Local Sync**: when `source: "USB"` and `syncUsbToLocal: true`, files are copied from `usbPath` to `./soundFiles` and played locally (UI shows syncing with spinner and results)
+- **Backup functionality**: Optionally backup local files before USB sync operations
+- **USB path probing** with automatic retry for reliability
 - **Autostart Random Loop** on startup (optional)
 - **Continue playing on HIDE** (optional)
+- **Marquee scrolling** for long "Now Playing" text
+- **Hide/Show Toggle**: Optional on-screen toggle button to collapse/expand the module while keeping playback functional
+- **Theme customization**: Dark/light mode, color overrides, opacity controls
 - **Allowed extensions filter** (front-end configurable and enforced in the backend)
+- **Accessibility features**: Focus-visible styles, keyboard navigation support
 
 ---
 
@@ -88,6 +97,7 @@ Add the module to your `config/config.js`:
 | `continueOnHide`     | boolean         | `true`                          | If `true`, audio keeps playing when the module receives `HIDE`. Otherwise it stops on `HIDE`/`SUSPEND`/`STOP`. |
 | `syncUsbToLocal`     | boolean         | `false`                         | If `true`, backend can copy from `usbPath` into the module's `soundFiles` directory (see Notifications). |
 | `autostartRandomLoop`| boolean         | `false`                         | Start randomized playback automatically after the scan completes (once at startup). |
+| `showHideToggle`     | boolean         | `true`                          | If `true`, displays a toggle button to hide/show the module grid while keeping playback functional. 
 | `tracks`             | array           | `[]`                            | Populated automatically by the scan. For `URL` source, you can provide objects with `{ url, title, artist }`. |
 | `backupLocal`        | boolean         | `false`                         | If `true` and `source: "USB"`, copy the current `./soundFiles` into `./backupFiles` once before the first USB scan/sync. |
 | `darkMode`           | boolean/null    | `null`                          | Theme control: `null` = auto (default CSS), `true` = force dark mode, `false` = force light mode. |

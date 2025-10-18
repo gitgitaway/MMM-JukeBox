@@ -17,7 +17,7 @@ Module.register("MMM-JukeBox", {
     showStopButton: true,          // Show Stop button (legacy row)
     showControlBar: false,         // Default: show legacy Random/Pause/Stop row; set true to show ◀ ⏸ ▷ ✖ ▶ control bar
     marqueeNowPlaying: true,       // Scroll long "Now Playing" text
-    continueOnHide: true,
+    continueOnHide: false,
     showVolumeControl: true,       // Toggle volume slider visibility
     defaultVolume: 80,             // Default volume percent (0..100) used on first run
     volumeInputDebounceMs: 100,    // Debounce for volume slider oninput to reduce rapid updates
@@ -69,6 +69,7 @@ Module.register("MMM-JukeBox", {
     this.syncInProgress = false; // UI status: currently syncing USB -> local
     this.lastSync = null; // { ok, copied, skipped, time }
     this.lastBackup = null; // { ok, copied, skipped, error?, time }
+    this.isContentHidden = false; // Track visibility state for hide/show toggle
 
     // Initialize throttled updateDom helper
     const throttleMs = Math.max(0, Number(this.config.updateDomThrottleMs || 0));
@@ -246,6 +247,22 @@ Module.register("MMM-JukeBox", {
 
     // Apply theme and appearance overrides via dynamic CSS injection
     this._applyThemeOverrides(wrapper);
+
+    // Create hide/show toggle icon (always visible in bottom right)
+    const toggleIcon = document.createElement("div");
+    toggleIcon.className = "jukebox-toggle-icon";
+    toggleIcon.innerHTML = this.isContentHidden ? "▲" : "▼"; // Up arrow when hidden, down arrow when visible
+    toggleIcon.title = this.isContentHidden ? "Show JukeBox" : "Hide JukeBox";
+    toggleIcon.onclick = () => {
+      this.isContentHidden = !this.isContentHidden;
+      this.updateDom();
+    };
+    wrapper.appendChild(toggleIcon);
+
+    // If content is hidden, return wrapper with only the toggle icon
+    if (this.isContentHidden) {
+      return wrapper;
+    }
 
     if (!this.tracksLoaded) {
       const loading = document.createElement("div");
