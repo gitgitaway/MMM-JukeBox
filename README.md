@@ -1,9 +1,9 @@
 # MMM-JukeBox
 
-A MagicMirror² module that displays a grid of numbered buttons for your audio tracks and lets you play them individually or in a randomized loop. 
-Supports local files stored on the SD card, USB paths (securely streamed via the backend), and URL sources. 
+A MagicMirror² module that displays a grid of numbered buttons for your audio tracks and lets you play them individually or in a randomized loop.
+Supports local files stored on the SD card, USB paths (securely streamed via the backend), and URL sources.
 Includes pagination, hover/active styling, volume control, and an optional autostart random loop.
-Number of buttons on the grid will automatically match the number of sound files 
+Number of buttons on the grid will automatically match the number of sound files
 
 - **Version**: 1.1.0
 - **Author**: gitgitaway
@@ -13,7 +13,7 @@ Number of buttons on the grid will automatically match the number of sound files
 
 ---
 ## Screenshots
- 
+
 - ![Grid with Traditional Buttons](./screenshots/traditional-buttons.png)
 - ![Grid with Control Bar](./screenshots/control-bar.png)
 
@@ -76,7 +76,7 @@ Add the module to your `config/config.js`:
     syncUsbToLocal: false,           // Explanation: optional backend copy from USB to ./soundFiles
     autostartRandomLoop: false       // Explanation: true = auto start random loop on startup
 
-    
+
   }
 },
 ```
@@ -97,7 +97,7 @@ Add the module to your `config/config.js`:
 | `continueOnHide`     | boolean         | `true`                          | If `true`, audio keeps playing when the module receives `HIDE`. Otherwise it stops on `HIDE`/`SUSPEND`/`STOP`. |
 | `syncUsbToLocal`     | boolean         | `false`                         | If `true`, backend can copy from `usbPath` into the module's `soundFiles` directory (see Notifications). |
 | `autostartRandomLoop`| boolean         | `false`                         | Start randomized playback automatically after the scan completes (once at startup). |
-| `showHideToggle`     | boolean         | `true`                          | If `true`, displays a toggle button to hide/show the module grid while keeping playback functional. 
+| `showHideToggle`     | boolean         | `true`                          | If `true`, displays a toggle button to hide/show the module grid while keeping playback functional.
 | `tracks`             | array           | `[]`                            | Populated automatically by the scan. For `URL` source, you can provide objects with `{ url, title, artist }`. |
 | `backupLocal`        | boolean         | `false`                         | If `true` and `source: "USB"`, copy the current `./soundFiles` into `./backupFiles` once before the first USB scan/sync. |
 | `darkMode`           | boolean/null    | `null`                          | Theme control: `null` = auto (default CSS), `true` = force dark mode, `false` = force light mode. |
@@ -148,6 +148,12 @@ GET /MMM-JukeBox/usb?base=<encodedPath>&file=<encodedFilename>
   - Payload: `{ ok: boolean, copied?: number, skipped?: number, dest?: string, error?: string }`
   - Explanation: Outcome of a sync request.
 
+## Remote-Control Integration
+
+JukeBox also works great with [MMM-Remote-Control](https://github.com/MagicMirrorOrg/MMM-Remote-Control): you can sit back on the sofa and control your music right from your phone.
+
+Just install and enable MMM-Remote-Control, restart MagicMirror, and the JukeBox controls appear automatically in the Remote-Control menu. No extra custom menu setup needed.
+
 ---
 
 ## Styling
@@ -182,20 +188,20 @@ Key classes from `MMM-JukeBox.css` you can theme in your custom CSS:
 ---
 ## Notes
 
-This is the 4th module in my Celtic themed man cave magicmirror.  
+This is the 4th module in my Celtic themed man cave magicmirror.
 - ![](./screenshots/celticmm-screenshot.png)
 
- The other modules can be found here:- 
+ The other modules can be found here:-
 - Module 1:  https://github.com/gitgitaway/MMM-MyTeams-Clock
 - Module 2:  https://github.com/gitgitaway/MMM-MyTeams-LeaugeTable
 - Module 3:  https://github.com/gitgitaway/MMM-MyTeams-Fixtures
 - Module 5:  https://github.com/gitgitaway/MMM-Celtic-OnThisDay
 ---
 ## Acknowledgments
-Thanks to the MagicMirror community for inspiration and guidance! Special thanks to @jasonacox for his work on MMM-MusicPlayer which served as a starting point. 
+Thanks to the MagicMirror community for inspiration and guidance! Special thanks to @jasonacox for his work on MMM-MusicPlayer which served as a starting point.
 
 ## Credits
-- All tracks are the property of their respective owners; included tracks are for demonstration purposes only and should be replaced with your own 
+- All tracks are the property of their respective owners; included tracks are for demonstration purposes only and should be replaced with your own.
 
 
 ## License

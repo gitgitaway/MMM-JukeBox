@@ -10,7 +10,7 @@ Module.register("MMM-JukeBox", {
     syncUsbToLocal: false,        // Sync files from USB to local storage (for persistent playback)
     tracks: [],                                            // Tracks are populated by node_helper scan; this initial shape is unused after scan
     allowedExtensions: [".mp3", ".wav", ".ogg", ".m4a"],   // Allowed extensions for scan (overridable from config.js)
-   
+
     // UI options
     autostartRandomLoop: false,    // Controls whether the module will auto start random loop at startup
     showPauseButton: true,         // Show Pause/Resume button (legacy row)
@@ -23,7 +23,7 @@ Module.register("MMM-JukeBox", {
     volumeInputDebounceMs: 100,    // Debounce for volume slider oninput to reduce rapid updates
     updateDomThrottleMs: 100,      // Throttle interval for updateDom calls (ms)
     pageSize: 40,                  // Pagination - limits the number of buttons per page
-    
+
     // Status / UX
     showSyncStatus: true,          // Show sync/probe status messages in the UI
     usbProbeRetryMs: 10000,        // Retry probing USB path if initially unavailable
@@ -32,7 +32,7 @@ Module.register("MMM-JukeBox", {
     // Security
     restrictUsbBase: true,         // If true, backend will restrict USB streaming to the configured base path only
     allowedUsbBase: null,          // Optional explicit base path to allow (defaults to usbPath)
-    
+
     // Maintenance
     backupLocal: false,            // If true (USB source): copy ./soundFiles -> ./backupFiles before first USB scan/sync
 
@@ -41,12 +41,12 @@ Module.register("MMM-JukeBox", {
     stopButtonText: "Stop",
     volumeLabel: "Volume",        // Label displayed for the slider
     infoText: "Select a number or use Random Play.",
-     
+
     // Grid button colour scheme options
 		colorActive: "#018749",
 		colorHover: "#FFD700",
 		colorDefault: "#222",
-		
+
 		// Theme and appearance overrides
 		darkMode: null,              // null = auto, true = force dark, false = force light
 		fontColorOverride: null,     // Override all font colors (e.g., "#FFFFFF")
@@ -939,11 +939,38 @@ Module.register("MMM-JukeBox", {
   },
 
   notificationReceived: function (notif, payload, sender) {
+    if (notif === "ALL_MODULES_STARTED") {
+      this.registerApi();
+      return;
+    }
+    if (notif === "MMM_JUKEBOX_PLAY") return this.playButtonAction();
+    if (notif === "MMM_JUKEBOX_PAUSE") return this.togglePause();
+    if (notif === "MMM_JUKEBOX_STOP") return this.stopAudio();
+    if (notif === "MMM_JUKEBOX_NEXT") return this.playNext();
+    if (notif === "MMM_JUKEBOX_PREVIOUS") return this.playPrev();
+    if (notif === "MMM_JUKEBOX_RANDOM") return this.startRandomPlay();
     if (notif === "HIDE" && this.config.continueOnHide && this.audio && !this.audio.paused) {
       // Do nothing, let audio continue
     } else if (notif === "HIDE" || notif === "SUSPEND" || notif === "STOP") {
       this.stopAudio();
     }
+  },
+
+  // Register first-class API actions with MMM-Remote-Control (auto-discovered, no custom_menu needed).
+  // Each action maps to a dedicated module notification handled below.
+  registerApi: function () {
+    this.sendNotification("REGISTER_API", {
+      module: this.name,
+      path: "jukebox",
+      actions: {
+        play: { notification: "MMM_JUKEBOX_PLAY", prettyName: "Play / Resume" },
+        pause: { notification: "MMM_JUKEBOX_PAUSE", prettyName: "Pause" },
+        stop: { notification: "MMM_JUKEBOX_STOP", prettyName: "Stop" },
+        next: { notification: "MMM_JUKEBOX_NEXT", prettyName: "Next track" },
+        previous: { notification: "MMM_JUKEBOX_PREVIOUS", prettyName: "Previous track" },
+        random: { notification: "MMM_JUKEBOX_RANDOM", prettyName: "Random / Shuffle" }
+      }
+    });
   },
 
   // Keyboard shortcuts for quick control
